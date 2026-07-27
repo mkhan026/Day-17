@@ -12,3 +12,32 @@ role: {
   type: String,
   default: 'user'
 }
+```
+
+### 2. Admin Middleware (`middleware/isadmin.js`)
+Checks if the authenticated user has the `admin` role:
+```js
+const isAdmin = (req, res, next) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ message: "Access denied. Admins only!" });
+  }
+  next();
+};
+```
+
+### 3. Admin Route (`routes/admin.js`)
+A protected route accessible only to admins:
+```
+GET /api/admin
+```
+Runs `authMiddleware` (verifies the token) followed by `isAdmin` (verifies the role).
+
+## How It Works
+1. **Authentication** — `authMiddleware` verifies the JWT and attaches the current user (including their role) to `req.user`.
+2. **Authorization** — `isAdmin` checks `req.user.role`. Non-admins get a `403 Forbidden` response.
+
+## Testing
+- Regular user hitting `/api/admin` → `403 Forbidden`
+- Admin user hitting `/api/admin` → `200 OK`, `{ "message": "Welcome Admin!" }`
+
+To test as admin, manually set a user's `role` to `"admin"` in the database, then log in again to get a fresh token.
